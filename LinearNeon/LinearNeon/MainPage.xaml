@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+			 xmlns:skia="clr-namespace:SkiaSharp.Views.Forms;assembly=SkiaSharp.Views.Forms"
+			 x:Class="LinearNeon.MainPage">
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="20*"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width="5*"/>
+			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width="5*"/>
+			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width="5*"/>
+		</Grid.ColumnDefinitions>
+
+		<BoxView BackgroundColor="Black"
+				 Grid.Row="0"
+				 Grid.RowSpan="3"
+				 Grid.ColumnSpan="6"/>
+
+		<skia:SKCanvasView x:Name="canvasView"
+						   PaintSurface="canvasView_PaintSurface"
+						   VerticalOptions="FillAndExpand"
+						   Grid.Row="0"
+						   Grid.ColumnSpan="6" />
+
+
+		<Label Text="Start X"
+			   Grid.Row="1"
+			   Grid.Column="0"
+			   Grid.ColumnSpan="2"
+			   VerticalTextAlignment="Center"
+			   HorizontalTextAlignment="Center"
+			   BackgroundColor="Black"
+			   TextColor="Silver"/>
+		<Slider x:Name="xSlider"
+				Minimum="0"
+				Maximum="1"
+				Grid.Row="1"
+				Grid.Column="0"
+				Grid.ColumnSpan="2"
+				Value="0.5"/>
+
+		<Label Text="Start Y"
+			   Grid.Row="2"
+			   Grid.Column="0"
+			   Grid.ColumnSpan="2"
+			   VerticalTextAlignment="Center"
+			   HorizontalTextAlignment="Center"
+			   BackgroundColor="Black"
+			   TextColor="Silver"/>
+		<Slider x:Name="ySlider"
+				Minimum="0"
+				Maximum="1"
+				Grid.Row="2"
+				Grid.Column="0"
+				Grid.ColumnSpan="2"
+				Value="0.5"/>
+
+		<Label Text="Start Angle"
+			   Grid.Row="1"
+			   Grid.Column="2"
+			   Grid.ColumnSpan="2"
+			   VerticalTextAlignment="Center"
+			   HorizontalTextAlignment="Center"
+			   BackgroundColor="Black"
+			   TextColor="Silver"/>
+		<Slider x:Name="startSlider"
+				Minimum="0"
+				Maximum="1"
+				Grid.Row="1"
+				Grid.Column="2"
+				Grid.ColumnSpan="2"
+				Value="0.5"/>
+
+		<Label Text="Sweep Angle"
+			   Grid.Row="2"
+			   Grid.Column="2"
+			   Grid.ColumnSpan="2"
+			   VerticalTextAlignment="Center"
+			   HorizontalTextAlignment="Center"
+			   BackgroundColor="Black"
+			   TextColor="Silver"/>
+		<Slider x:Name="sweepSlider"
+				Minimum="0"
+				Maximum="1"
+				Grid.Row="2"
+				Grid.Column="2"
+				Grid.ColumnSpan="2"
+				Value="0.5"/>
+
+		<Label Text="Arc Radius"
+			   Grid.Row="1"
+			   Grid.Column="4"
+			   Grid.ColumnSpan="2"
+			   VerticalTextAlignment="Center"
+			   HorizontalTextAlignment="Center"
+			   BackgroundColor="Black"
+			   TextColor="Silver"/>
+		<Slider x:Name="radiusSlider"
+				Minimum="0"
+				Maximum="1"
+				Grid.Row="1"
+				Grid.Column="4"
+				Grid.ColumnSpan="2"
+				Value="0.5"/>
+
+		<Label Text="Clockwise"
+			   Grid.Row="2"
+			   Grid.Column="4"
+			   Grid.ColumnSpan="2"
+			   VerticalTextAlignment="Center"
+			   HorizontalTextAlignment="Center"
+			   BackgroundColor="Black"
+			   TextColor="Silver"/>
+		<Slider x:Name="clockwiseSlider"
+				Minimum="0"
+				Maximum="1"
+				Grid.Row="2"
+				Grid.Column="4"
+				Grid.ColumnSpan="2"
+				Value="0.5"/>
+	</Grid>
+</ContentPage>
