@@ -16,6 +16,7 @@ namespace LinearNeon
 	{
 		// Constants
 		private const double pi = Math.PI;
+		bool clockwise;
 
 		// Paints
 		SKPaint blackFill = new SKPaint
@@ -23,28 +24,6 @@ namespace LinearNeon
 			Style = SKPaintStyle.Fill,
 			Color = SKColors.Black,
 			TextSize = 8,
-			IsAntialias = true
-		};
-
-		SKPaint slateFill = new SKPaint
-		{
-			Style = SKPaintStyle.Fill,
-			Color = SKColors.DarkSlateGray,
-			TextSize = 8,
-			IsAntialias = true
-		};
-
-		SKPaint whiteFill = new SKPaint
-		{
-			Style = SKPaintStyle.Fill,
-			Color = SKColors.White,
-			IsAntialias = true
-		};
-
-		SKPaint limeFill = new SKPaint
-		{
-			Style = SKPaintStyle.Fill,
-			Color = SKColors.LimeGreen,
 			IsAntialias = true
 		};
 
@@ -56,30 +35,11 @@ namespace LinearNeon
 			IsAntialias = true
 		};
 
-		SKPaint blackStroke = new SKPaint
+		SKPaint blueFill = new SKPaint
 		{
-			Style = SKPaintStyle.Stroke,
-			Color = SKColors.Black,
-			StrokeWidth = 10,
-			StrokeCap = SKStrokeCap.Round,
-			IsAntialias = true
-		};
-
-		SKPaint slateStroke = new SKPaint
-		{
-			Style = SKPaintStyle.Stroke,
-			Color = SKColors.DarkSlateGray,
-			StrokeWidth = 10,
-			StrokeCap = SKStrokeCap.Round,
-			IsAntialias = true
-		};
-
-		SKPaint blueStroke = new SKPaint
-		{
-			Style = SKPaintStyle.Stroke,
-			Color = SKColors.Blue,
-			StrokeWidth = 10,
-			StrokeCap = SKStrokeCap.Round,
+			Style = SKPaintStyle.Fill,
+			Color = SKColors.LightBlue,
+			TextSize = 8,
 			IsAntialias = true
 		};
 
@@ -92,14 +52,6 @@ namespace LinearNeon
 			IsAntialias = true
 		};
 
-		SKPaint yellowStroke = new SKPaint
-		{
-			Style = SKPaintStyle.Stroke,
-			Color = SKColors.Yellow,
-			StrokeWidth = 1,
-			StrokeCap = SKStrokeCap.Round,
-			IsAntialias = true
-		};
 		public MainPage()
 		{
 			InitializeComponent();
@@ -109,6 +61,8 @@ namespace LinearNeon
 				canvasView.InvalidateSurface();
 				return true;
 			});
+		
+
 		}
 		private void canvasView_PaintSurface(object sender, SKPaintSurfaceEventArgs e)
 		{
@@ -117,118 +71,159 @@ namespace LinearNeon
 			SKCanvas canvas = surface.Canvas;
 			canvas.DrawPaint(blackFill);
 
-			//Set Transforms
+			// canvas transforms
 			int width = e.Info.Width;
 			int height = e.Info.Height;
 			canvas.Translate(width / 2, height / 2);
 			canvas.Scale(Math.Min(width / 210f, height / 520f));
+
+			// variables
+			float[,] outlinePoint = new float[2, 8], pointsTotal = new float[2, 1];
+			float[] slider = new float[2];
+			float xCenter, yCenter, lineWidth;
+			double startAngle, sweepAngle, endAngle, toCenterAngle, startRadiusAngle, endRadiusAngle;
+			double radius, outerRadius, innerRadius, circleFraction, bezierLength;
+			string svgPath;
+
+			// bound and formula variables
+			slider[0] = Convert.ToSingle(xSlider.Value * 200) - 100;
+			slider[1] = Convert.ToSingle(ySlider.Value * 200) - 100;
+			startAngle = startSlider.Value * (pi * 2);
+			sweepAngle = sweepSlider.Value * (pi / 2);
+			lineWidth = Convert.ToSingle(0.1 +(99.9 * thicknessSlider.Value));
+			radius = (radiusSlider.Value * 200)+(lineWidth/2);
+
+			// calculate center of circle
+			toCenterAngle = clockwise ? startAngle + (pi / 2) : startAngle - (pi / 2);
+			if (toCenterAngle > (pi * 2)) toCenterAngle -= pi * 2;
+			if (toCenterAngle < 0) toCenterAngle += pi * 2;
+			xCenter = Convert.ToSingle(slider[0] + (Math.Cos(toCenterAngle) * radius));
+			yCenter = Convert.ToSingle(slider[1] + (Math.Sin(toCenterAngle) * radius));
+			// radiuses, radii?
+			outerRadius = radius + (lineWidth / 2);
+			innerRadius = radius - (lineWidth / 2);
+
+			// calculate outer start
+			startRadiusAngle = clockwise ? startAngle - (pi / 2) : startAngle + (pi / 2);
+			startRadiusAngle -= Convert.ToInt32(startRadiusAngle / (pi * 2)) * (pi * 2); 
+			
+			// mathematical overcircle check - replaces: if (startRadiusAngle > (pi * 2d)) startRadiusAngle -= pi * 2d
+			outlinePoint[0, 0] = Convert.ToSingle(xCenter + (Math.Cos(startRadiusAngle) * outerRadius));
+			outlinePoint[1, 0] = Convert.ToSingle(yCenter + (Math.Sin(startRadiusAngle) * outerRadius));
+			// calculate outer bezier length                                 
+			circleFraction = pi * 2 / sweepAngle;
+			bezierLength = outerRadius * 4 / 3 * Math.Tan(pi / (2 * circleFraction));
+			// calculate outer start bezier point
+			outlinePoint[0, 1] = Convert.ToSingle(outlinePoint[0, 0] + (Math.Cos(startAngle) * bezierLength));
+			outlinePoint[1, 1] = Convert.ToSingle(outlinePoint[1, 0] + (Math.Sin(startAngle) * bezierLength));
+			// calculate outer arc end
+			endRadiusAngle = clockwise ? startRadiusAngle + sweepAngle : startRadiusAngle - sweepAngle;
+			if (endRadiusAngle > (pi * 2)) endRadiusAngle -= pi * 2;
+			if (endRadiusAngle < 0d) endRadiusAngle += pi * 2d;
+			outlinePoint[0, 3] = Convert.ToSingle(xCenter + (Math.Cos(endRadiusAngle) * outerRadius));
+			outlinePoint[1, 3] = Convert.ToSingle(yCenter + (Math.Sin(endRadiusAngle) * outerRadius));
+			// calculate outer end bezier point
+			endAngle = clockwise ? endRadiusAngle - (pi / 2) : endRadiusAngle + (pi / 2);
+			if (endAngle > (pi * 2d)) endAngle -= pi * 2;
+			if (endAngle < 0d) endAngle += pi * 2;
+			outlinePoint[0, 2] = Convert.ToSingle(outlinePoint[0, 3] + (Math.Cos(endAngle) * bezierLength));
+			outlinePoint[1, 2] = Convert.ToSingle(outlinePoint[1, 3] + (Math.Sin(endAngle) * bezierLength));
+
+			// calculate inner start
+			startRadiusAngle = clockwise ? startAngle - (pi / 2) : startAngle + (pi / 2);
+			startRadiusAngle -= Convert.ToInt32(startRadiusAngle / (pi * 2)) * (pi * 2); // mathematical overcircle check - replaces: if (startRadiusAngle > (pi * 2d)) startRadiusAngle -= pi * 2d
+			outlinePoint[0, 7] = Convert.ToSingle(xCenter + (Math.Cos(startRadiusAngle) * innerRadius));
+			outlinePoint[1, 7] = Convert.ToSingle(yCenter + (Math.Sin(startRadiusAngle) * innerRadius));
+			// calculate inner bezier length                                 
+			circleFraction = pi * 2 / sweepAngle;
+			bezierLength = innerRadius * 4 / 3 * Math.Tan(pi / (2 * circleFraction));
+			// calculate inner start bezier point
+			outlinePoint[0, 6] = Convert.ToSingle(outlinePoint[0, 7] + (Math.Cos(startAngle) * bezierLength));
+			outlinePoint[1, 6] = Convert.ToSingle(outlinePoint[1, 7] + (Math.Sin(startAngle) * bezierLength));
+			// calculate inner arc end
+			endRadiusAngle = clockwise ? startRadiusAngle + sweepAngle : startRadiusAngle - sweepAngle;
+			if (endRadiusAngle > (pi * 2)) endRadiusAngle -= pi * 2;
+			if (endRadiusAngle < 0d) endRadiusAngle += pi * 2d;
+			outlinePoint[0, 4] = Convert.ToSingle(xCenter + (Math.Cos(endRadiusAngle) * innerRadius));
+			outlinePoint[1, 4] = Convert.ToSingle(yCenter + (Math.Sin(endRadiusAngle) * innerRadius));
+			// calculate inner end bezier point
+			endAngle = clockwise ? endRadiusAngle - (pi / 2) : endRadiusAngle + (pi / 2);
+			if (endAngle > (pi * 2d)) endAngle -= pi * 2;
+			if (endAngle < 0d) endAngle += pi * 2;
+			outlinePoint[0, 5] = Convert.ToSingle(outlinePoint[0, 4] + (Math.Cos(endAngle) * bezierLength));
+			outlinePoint[1, 5] = Convert.ToSingle(outlinePoint[1, 4] + (Math.Sin(endAngle) * bezierLength));
+
+			// Convert absolute to relative
+			pointsTotal[0, 0] = outlinePoint[0, 0];
+			pointsTotal[1, 0] = outlinePoint[1, 0];
+			for (int i = 3; i > 0; --i)
+			{
+				outlinePoint[0, i] -= outlinePoint[0, 0];
+				outlinePoint[1, i] -= outlinePoint[1, 0];
+			}
+			pointsTotal[0, 0] += outlinePoint[0, 3];
+			pointsTotal[1, 0] += outlinePoint[1, 3];
+			outlinePoint[0, 4] -= pointsTotal[0, 0];
+			outlinePoint[1, 4] -= pointsTotal[1, 0];
+			pointsTotal[0, 0] += outlinePoint[0, 4];
+			pointsTotal[1, 0] += outlinePoint[1, 4];
+			for (int i = 7; i > 4; --i)
+			{
+				outlinePoint[0, i] -= pointsTotal[0, 0];
+				outlinePoint[1, i] -= pointsTotal[1, 0];
+			}
+
+			// create conical paint
+			SKPoint center = new SKPoint(xCenter, yCenter);
+			var conicalPaint = new SKPaint { Shader = twoPointsConicalShader(center, Convert.ToSingle(radius), lineWidth) };
+
 
 			//draw grid
 			for (int i = -200; i <= 200; i = i + 10)
 			{
 				for (int j = -200; j <= 200; j = j + 10)
 				{
-					int r = ((i % 100 == 0) & (j % 100 == 0)) ? 2 : 1;
+					int r = ((i % 100 == 0) & (j % 100 == 0)) ? 5 : 2;
 					SKPoint dot = new SKPoint(i, j);
-					canvas.DrawCircle(dot, r, limeFill);
+					canvas.DrawCircle(dot, r, blueFill);
 				}
 			}
 
-			//Declare variables
-			float[,] conPts = new float[2, 4];
-			float xCenter, yCenter;
-			double startAngle, sweepAngle, endAngle, toRadiusAngle, startRadiusAngle, endRadiusAngle;
-			double radius, circleFraction, bezierLength;
-			bool clockwise; // direction
-			string svgAbsoluteBezierPath, svgRelativeBezierPath;
 
-			// Bound variables
-			conPts[0, 0] = Convert.ToSingle(xSlider.Value * 200f) - 100;
-			conPts[1, 0] = Convert.ToSingle(ySlider.Value * 200f) - 100;
-			startAngle = startSlider.Value * (pi * 2);
-			sweepAngle = sweepSlider.Value * (pi / 2);
-			radius = radiusSlider.Value * 200;
-			clockwise = Convert.ToBoolean(Convert.ToInt32(Math.Round(clockwiseSlider.Value)));
 
-			// Calculate bezier length
-			circleFraction = pi * 2d / sweepAngle;
-			bezierLength = radius * 4d / 3d * Math.Tan(pi / (2d * circleFraction));
+			// concatenate, parse and draw relative svg
+			svgPath = "m " + outlinePoint[0, 0] + " " + outlinePoint[1, 0] + " c " + outlinePoint[0, 1] + " " + outlinePoint[1, 1] + " " + outlinePoint[0, 2] + " " + outlinePoint[1, 2] + " " + outlinePoint[0, 3] + " " + outlinePoint[1, 3] +
+					 " l " + outlinePoint[0, 4] + " " + outlinePoint[1, 4] + " c " + outlinePoint[0, 5] + " " + outlinePoint[1, 5] + " " + outlinePoint[0, 6] + " " + outlinePoint[1, 6] + " " + outlinePoint[0, 7] + " " + outlinePoint[1, 7] + " z";
+			SKPath bezierPath = SKPath.ParseSvgPathData(svgPath);
+			canvas.DrawPath(bezierPath, conicalPaint);
+			canvas.DrawText(svgPath, -240, 240, redFill);
 
-			// calculate start bezier point
-			conPts[0, 1] = Convert.ToSingle(conPts[0, 0] + (Math.Cos(startAngle) * bezierLength));
-			conPts[1, 1] = Convert.ToSingle(conPts[1, 0] + (Math.Sin(startAngle) * bezierLength));
-
-			// calculate arc center
-			toRadiusAngle = clockwise ? startAngle + (pi / 2d) : startAngle - (pi / 2d);
-			if (toRadiusAngle > (2d * pi)) toRadiusAngle -= 2d * pi;
-			if (toRadiusAngle < 0d) toRadiusAngle += 2d * pi;
-			xCenter = Convert.ToSingle(conPts[0, 0] + (Math.Cos(toRadiusAngle) * radius));
-			yCenter = Convert.ToSingle(conPts[1, 0] + (Math.Sin(toRadiusAngle) * radius));
-
-			// calculate arc end
-			startRadiusAngle = toRadiusAngle + pi;
-			//if (startRadiusAngle > (2d * Math.PI)) startRadiusAngle -= 2d * Math.PI;
-			startRadiusAngle -= Convert.ToInt32(startRadiusAngle / (pi * 2)) * (pi * 2);
-			endRadiusAngle = clockwise ? startRadiusAngle + sweepAngle : startRadiusAngle - sweepAngle;
-			if (endRadiusAngle > (2d * pi)) endRadiusAngle -= 2d * pi;
-			if (endRadiusAngle < 0d) endRadiusAngle += 2d * pi;
-			conPts[0, 3] = Convert.ToSingle(xCenter + (Math.Cos(endRadiusAngle) * radius));
-			conPts[1, 3] = Convert.ToSingle(yCenter + (Math.Sin(endRadiusAngle) * radius));
-
-			// calculate end bezier point
-			endAngle = clockwise ? endRadiusAngle - (pi / 2d) : endRadiusAngle + (pi / 2d);
-			if (endAngle > (2d * pi)) endAngle -= 2d * pi;
-			if (endAngle < 0d) endAngle += 2d * pi;
-			conPts[0, 2] = Convert.ToSingle(conPts[0, 3] + (Math.Cos(endAngle) * bezierLength));
-			conPts[1, 2] = Convert.ToSingle(conPts[1, 3] + (Math.Sin(endAngle) * bezierLength));
-
-			// assemble bezier string for arc
-			svgAbsoluteBezierPath = " C " + conPts[0, 1] + " " + conPts[1, 1] +
-				" " + conPts[0, 2] + " " + conPts[1, 2] + " " + conPts[0, 3] + " " + conPts[1, 3];
-			SKPath bezierPath = SKPath.ParseSvgPathData("M " + conPts[0, 0] + " " + conPts[1, 0] + svgAbsoluteBezierPath);
-
-			// calculate and draw tangents
-			SKPoint point1 = new SKPoint(conPts[0, 0], conPts[1, 0]);
-			SKPoint point2 = new SKPoint(Convert.ToSingle(conPts[0, 0] - (Math.Cos(startAngle) * 50)), Convert.ToSingle(conPts[1, 0] - (Math.Sin(startAngle) * 50)));
-			canvas.DrawLine(point1, point2, blueStroke);
-			point1 = new SKPoint(conPts[0, 3], conPts[1, 3]);
-			point2 = new SKPoint(Convert.ToSingle(conPts[0, 3] - (Math.Cos(endAngle) * 50)), Convert.ToSingle(conPts[1, 3] - (Math.Sin(endAngle) * 50)));
-			canvas.DrawLine(point1, point2, blueStroke);
-
-			//Draw absolute arc and control points
-			canvas.DrawPath(bezierPath, slateStroke);
-
-			point1 = new SKPoint(conPts[0, 0], conPts[1, 0]);
-			canvas.DrawCircle(point1, 3, redFill);
-			point2 = new SKPoint(conPts[0, 1], conPts[1, 1]);
-			canvas.DrawCircle(point2, 3, redFill);
-			canvas.DrawLine(point1, point2, yellowStroke);
-
-			point1 = new SKPoint(conPts[0, 2], conPts[1, 2]);
-			canvas.DrawCircle(point1, 3, redFill);
-			point2 = new SKPoint(conPts[0, 3], conPts[1, 3]);
-			canvas.DrawCircle(point2, 3, redFill);
-			canvas.DrawLine(point1, point2, yellowStroke);
-
-			SKPoint arcCenter = new SKPoint(xCenter, yCenter);
-			canvas.DrawCircle(arcCenter, 2, redFill);
-
-			canvas.DrawText("M " + conPts[0, 0] + " " + conPts[1, 0] + svgAbsoluteBezierPath, -170, 220, slateFill);
-
-			// convert literal to relative
-			for (int i = 3; i > 0; --i)
-			{
-				conPts[0, i] -= conPts[0, 0];
-				conPts[1, i] -= conPts[1, 0];
-			}
-			svgRelativeBezierPath = " c " + conPts[0, 1] + " " + conPts[1, 1] +
-				" " + conPts[0, 2] + " " + conPts[1, 2] + " " + conPts[0, 3] + " " + conPts[1, 3];
-			bezierPath = SKPath.ParseSvgPathData("m " + conPts[0, 0] + " " + conPts[1, 0] + svgRelativeBezierPath);
-
-			// draw relative arc
-			canvas.DrawPath(bezierPath, redStroke);
-			canvas.DrawText("m " + conPts[0, 0] + " " + conPts[1, 0] + svgRelativeBezierPath, -170, 240, redFill);
 			// return svgRelativeBezierPath;
+		}
+
+		private SKShader twoPointsConicalShader(SKPoint center, float radius, float width)
+		{
+			var colors = new SKColor[]
+			{
+				new SKColor(0, 0, 0, 0),
+				new SKColor(160, 0, 0, 200),
+				new SKColor(255, 0, 0, 240),
+				new SKColor(255, 128, 128, 128),
+				new SKColor(255, 255, 255, 255),
+				new SKColor(255, 128, 128, 128),
+				new SKColor(255, 0, 0, 240),
+				new SKColor(160, 0, 0, 200),
+				new SKColor(0, 0, 0, 0)
+			};
+			var shader = SKShader.CreateTwoPointConicalGradient(
+			center, radius + (width/2f), center, radius - (width/2f), colors, null,
+		SKShaderTileMode.Decal);
+			return shader;
+		}
+
+		private void clockwiseButton_Clicked(object sender, EventArgs e)
+		{
+			clockwise = !clockwise;
 		}
 	}
 }

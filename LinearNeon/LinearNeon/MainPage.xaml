@@ -9,6 +9,7 @@
 			<RowDefinition Height="20*"/>
 			<RowDefinition Height="*"/>
 			<RowDefinition Height="*"/>
+			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="*"/>
@@ -28,10 +29,9 @@
 						   PaintSurface="canvasView_PaintSurface"
 						   VerticalOptions="FillAndExpand"
 						   Grid.Row="0"
-						   Grid.ColumnSpan="6" />
+						   Grid.ColumnSpan="6"/>
 
-
-		<Label Text="Start X"
+		<Label x:Name ="label0" Text="Start X"
 			   Grid.Row="1"
 			   Grid.Column="0"
 			   Grid.ColumnSpan="2"
@@ -47,7 +47,7 @@
 				Grid.ColumnSpan="2"
 				Value="0.5"/>
 
-		<Label Text="Start Y"
+		<Label x:Name ="label1" Text="Start Y"
 			   Grid.Row="2"
 			   Grid.Column="0"
 			   Grid.ColumnSpan="2"
@@ -63,7 +63,7 @@
 				Grid.ColumnSpan="2"
 				Value="0.5"/>
 
-		<Label Text="Start Angle"
+		<Label x:Name ="label2" Text="Start Angle"
 			   Grid.Row="1"
 			   Grid.Column="2"
 			   Grid.ColumnSpan="2"
@@ -79,7 +79,7 @@
 				Grid.ColumnSpan="2"
 				Value="0.5"/>
 
-		<Label Text="Sweep Angle"
+		<Label x:Name ="label3" Text="Sweep Angle"
 			   Grid.Row="2"
 			   Grid.Column="2"
 			   Grid.ColumnSpan="2"
@@ -95,7 +95,7 @@
 				Grid.ColumnSpan="2"
 				Value="0.5"/>
 
-		<Label Text="Arc Radius"
+		<Label x:Name ="label4" Text="Arc Radius"
 			   Grid.Row="1"
 			   Grid.Column="4"
 			   Grid.ColumnSpan="2"
@@ -111,7 +111,7 @@
 				Grid.ColumnSpan="2"
 				Value="0.5"/>
 
-		<Label Text="Clockwise"
+		<Label x:Name ="label5" Text="Thickness"
 			   Grid.Row="2"
 			   Grid.Column="4"
 			   Grid.ColumnSpan="2"
@@ -119,12 +119,19 @@
 			   HorizontalTextAlignment="Center"
 			   BackgroundColor="Black"
 			   TextColor="Silver"/>
-		<Slider x:Name="clockwiseSlider"
+		<Slider x:Name="thicknessSlider"
 				Minimum="0"
 				Maximum="1"
 				Grid.Row="2"
 				Grid.Column="4"
 				Grid.ColumnSpan="2"
 				Value="0.5"/>
+
+		<Button x:Name="clockwiseButton" Text="Clockwise"
+				Grid.Row="3"
+				Grid.Column="2"
+				Grid.ColumnSpan="2"
+				Clicked="clockwiseButton_Clicked"
+				/>
 	</Grid>
 </ContentPage>
