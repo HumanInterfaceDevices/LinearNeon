@@ -10,6 +10,7 @@
 			<RowDefinition Height="*"/>
 			<RowDefinition Height="*"/>
 			<RowDefinition Height="*"/>
+			<RowDefinition Height="*"/>
 		</Grid.RowDefinitions>
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="*"/>
@@ -22,11 +23,11 @@
 
 		<BoxView BackgroundColor="Black"
 				 Grid.Row="0"
-				 Grid.RowSpan="3"
+				 Grid.RowSpan="5"
 				 Grid.ColumnSpan="6"/>
 
 		<skia:SKCanvasView x:Name="canvasView"
-						   PaintSurface="canvasView_PaintSurface"
+						   PaintSurface="CanvasView_PaintSurface"
 						   VerticalOptions="FillAndExpand"
 						   Grid.Row="0"
 						   Grid.ColumnSpan="6"/>
@@ -127,11 +128,43 @@
 				Grid.ColumnSpan="2"
 				Value="0.5"/>
 
+		<Button x:Name="gridButton" Text="Grid"
+				Grid.Row="4"
+				Grid.Column="0"
+				Grid.ColumnSpan="2"
+				Clicked="gridButton_Clicked"
+				/>
 		<Button x:Name="clockwiseButton" Text="Clockwise"
 				Grid.Row="3"
-				Grid.Column="2"
+				Grid.Column="0"
 				Grid.ColumnSpan="2"
 				Clicked="clockwiseButton_Clicked"
 				/>
+		<Button x:Name="outlineButton" Text="Outline"
+				Grid.Row="3"
+				Grid.Column="2"
+				Grid.ColumnSpan="2"
+				Clicked="outlineButton_Clicked"
+				/>
+		<Button x:Name="fillButton" Text="Fill"
+				Grid.Row="3"
+				Grid.Column="4"
+				Grid.ColumnSpan="2"
+				Clicked="fillButton_Clicked"
+				/>
+		
+		<Button x:Name="pathButton" Text="Path"
+				Grid.Row="4"
+				Grid.Column="2"
+				Grid.ColumnSpan="2"
+				Clicked="pathButton_Clicked"
+				/>
+		<Button x:Name="controlButton" Text="Control Points"
+				Grid.Row="4"
+				Grid.Column="4"
+				Grid.ColumnSpan="2"
+				Clicked="controlButton_Clicked"
+				/>
+
 	</Grid>
 </ContentPage>
