@@ -1,11 +1,4 @@
 ﻿using System;
-//using System.IO;
-//using System.Reflection;
-//using System.Collections.Generic;
-//using System.ComponentModel;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
 using Xamarin.Forms;
 using SkiaSharp;
 using SkiaSharp.Views.Forms;
@@ -111,11 +104,10 @@ namespace LinearNeon
 			canvas.Scale(Math.Min(width / 210f, height / 520f));
 
 			// variables
-			float[,] outlinePoint = new float[2, 8], controlPoint = new float[2, 8], pathPoint = new float[2, 4], pointsTotal = new float[2, 1];
+			float[,] pathPoint = new float[2, 4];
 			float[] slider = new float[2];
 			float xCenter, yCenter, lineWidth;
-			double startAngle, sweepAngle, endAngle, toCenterAngleAngle, startRadiusAngle, endRadiusAngle;
-			double radius, circleFraction, bezierLength;
+			double startAngle, sweepAngle, toCenterAngle, radius;
 			string boundingSvgPath, svgPath;
 
 			// bound and formula variables
@@ -126,42 +118,17 @@ namespace LinearNeon
 			lineWidth = Convert.ToSingle(100 * thicknessSlider.Value);
 			radius = (radiusSlider.Value * 200) + (lineWidth / 2);
 
-			// calculate center of circle
-			toCenterAngleAngle = clockwise ? startAngle + (pi / 2) : startAngle - (pi / 2);
-			if (toCenterAngleAngle > (pi * 2)) toCenterAngleAngle -= pi * 2;
-			if (toCenterAngleAngle < 0) toCenterAngleAngle += pi * 2;
-			xCenter = Convert.ToSingle(slider[0] + (Math.Cos(toCenterAngleAngle) * radius));
-			yCenter = Convert.ToSingle(slider[1] + (Math.Sin(toCenterAngleAngle) * radius));
 
-			//// calculate path start
-			//startRadiusAngle = clockwise ? startAngle - (pi / 2) : startAngle + (pi / 2);
-			//startRadiusAngle -= Convert.ToInt32(startRadiusAngle / (pi * 2)) * (pi * 2); // mathematical overcircle check - replaces: if (startRadiusAngle > (pi * 2d)) startRadiusAngle -= pi * 2d
-			//pathPoint[0, 0] = Convert.ToSingle(xCenter + (Math.Cos(startRadiusAngle) * radius));
-			//pathPoint[1, 0] = Convert.ToSingle(yCenter + (Math.Sin(startRadiusAngle) * radius));
+			// concatenate, parse and draw svgs
+			pathPoint = ArcPlot.arcPointsArray(startAngle, sweepAngle, radius, 0f, clockwise);
+			pathPoint[0, 0] += slider[0];
+			pathPoint[1, 0] += slider[1];
+			svgPath = "m " + pathPoint[0, 0] + " " + pathPoint[1, 0] + " c " + pathPoint[0, 1] + " " + pathPoint[1, 1] + " " + pathPoint[0, 2] + " " + pathPoint[1, 2] + " " + pathPoint[0, 3] + " " + pathPoint[1, 3];
+			SKPath bezierPath = SKPath.ParseSvgPathData(svgPath);
 
-			//// calculate path bezier length                                 
-			//circleFraction = pi * 2 / sweepAngle;
-			//bezierLength = radius * 4 / 3 * Math.Tan(pi / (2 * circleFraction));
+			boundingSvgPath = ArcOutlineSvg(startAngle, sweepAngle, radius, lineWidth / 2, clockwise, false, 0, 0, slider[0], slider[1]);
+			SKPath boundingBezierPath = SKPath.ParseSvgPathData(boundingSvgPath);
 
-			//// calculate path start bezier point
-			//pathPoint[0, 1] = Convert.ToSingle(pathPoint[0, 0] + (Math.Cos(startAngle) * bezierLength));
-			//pathPoint[1, 1] = Convert.ToSingle(pathPoint[1, 0] + (Math.Sin(startAngle) * bezierLength));
-
-			//// calculate path arc end
-			//endRadiusAngle = clockwise ? startRadiusAngle + sweepAngle : startRadiusAngle - sweepAngle;
-			//if (endRadiusAngle > (pi * 2)) endRadiusAngle -= pi * 2;
-			//if (endRadiusAngle < 0d) endRadiusAngle += pi * 2d;
-			//pathPoint[0, 3] = Convert.ToSingle(xCenter + (Math.Cos(endRadiusAngle) * radius));
-			//pathPoint[1, 3] = Convert.ToSingle(yCenter + (Math.Sin(endRadiusAngle) * radius));
-
-			//// calculate path end bezier point
-			//endAngle = clockwise ? endRadiusAngle - (pi / 2) : endRadiusAngle + (pi / 2);
-			//if (endAngle > (pi * 2d)) endAngle -= pi * 2;
-			//if (endAngle < 0d) endAngle += pi * 2;
-			//pathPoint[0, 2] = Convert.ToSingle(pathPoint[0, 3] + (Math.Cos(endAngle) * bezierLength));
-			//pathPoint[1, 2] = Convert.ToSingle(pathPoint[1, 3] + (Math.Sin(endAngle) * bezierLength));
-
-			//draw grid
 			if (isGrid)
 			{
 				for (int i = -400; i <= 400; i = i + 10)
@@ -174,60 +141,41 @@ namespace LinearNeon
 					}
 				}
 			}
-
-			// concatenate, parse and draw svgs
-			pathPoint = ArcPlot.arcPointsArray(startAngle, sweepAngle, radius, 0f, clockwise);
-
-			pathPoint[0, 0] += slider[0];
-			pathPoint[1, 0] += slider[1];
-
-
-			boundingSvgPath = ArcOutlineSvg(startAngle, sweepAngle, radius, lineWidth / 2, clockwise, false, 0, 0, slider[0], slider[1]);
-
-			svgPath = "m " + pathPoint[0, 0] + " " + pathPoint[1, 0] + " c " + pathPoint[0, 1] + " " + pathPoint[1, 1] + " " + pathPoint[0, 2] + " " + pathPoint[1, 2] + " " + pathPoint[0, 3] + " " + pathPoint[1, 3];
-			SKPath boundingBezierPath = SKPath.ParseSvgPathData(boundingSvgPath);
-
 			if (outline)
 			{
 				canvas.DrawPath(boundingBezierPath, redStroke);
 				canvas.DrawPath(boundingBezierPath, redBlurStroke);
 			}
-
 			if (fill)
-			{
+			{	
+				// calculate center of circle
+				toCenterAngle = clockwise ? startAngle + (pi / 2) : startAngle - (pi / 2);
+				if (toCenterAngle > (pi * 2)) toCenterAngle -= pi * 2;
+				if (toCenterAngle < 0) toCenterAngle += pi * 2;
+				xCenter = Convert.ToSingle(slider[0] + (Math.Cos(toCenterAngle) * radius));
+				yCenter = Convert.ToSingle(slider[1] + (Math.Sin(toCenterAngle) * radius));
 				SKPoint center = new SKPoint(xCenter, yCenter);
 				var laserFill = new SKPaint { Shader = twoPointsConicalShader(center, Convert.ToSingle(radius), lineWidth) };
 				canvas.DrawPath(boundingBezierPath, laserFill);
 			}
-
 			if (path)
 			{
-				SKPath bezierPath = SKPath.ParseSvgPathData(svgPath);
 				canvas.DrawPath(bezierPath, greenStroke);
 			}
 			if (control)
 			{
-				SKPoint a = new SKPoint(controlPoint[0, 0] + slider[0], controlPoint[1, 0] + slider[1]);
-				SKPoint b = new SKPoint(controlPoint[0, 1] + slider[0], controlPoint[1, 1] + slider[1]);
+				SKPoint a = new SKPoint(pathPoint[0, 0], pathPoint[1, 0]);
+				SKPoint b = new SKPoint(pathPoint[0, 1] + slider[0], pathPoint[1, 1] + slider[1]);
 				canvas.DrawLine(a, b, yellowStroke);
 				canvas.DrawCircle(a, 1, yellowStroke);
 				canvas.DrawCircle(b, 1, yellowStroke);
-				a = new SKPoint(controlPoint[0, 2] + slider[0], controlPoint[1, 2] + slider[1]);
-				b = new SKPoint(controlPoint[0, 3] + slider[0], controlPoint[1, 3] + slider[1]);
-				canvas.DrawLine(a, b, yellowStroke);
-				canvas.DrawCircle(a, 1, yellowStroke);
-				canvas.DrawCircle(b, 1, yellowStroke);
-				a = new SKPoint(controlPoint[0, 4] + slider[0], controlPoint[1, 4] + slider[1]);
-				b = new SKPoint(controlPoint[0, 5] + slider[0], controlPoint[1, 5] + slider[1]);
-				canvas.DrawLine(a, b, yellowStroke);
-				canvas.DrawCircle(a, 1, yellowStroke);
-				canvas.DrawCircle(b, 1, yellowStroke);
-				a = new SKPoint(controlPoint[0, 6] + slider[0], controlPoint[1, 6] + slider[1]);
-				b = new SKPoint(controlPoint[0, 7] + slider[0], controlPoint[1, 7] + slider[1]);
+				a = new SKPoint(pathPoint[0, 2] + slider[0], pathPoint[1, 2] + slider[1]);
+				b = new SKPoint(pathPoint[0, 3] + slider[0], pathPoint[1, 3] + slider[1]);
 				canvas.DrawLine(a, b, yellowStroke);
 				canvas.DrawCircle(a, 1, yellowStroke);
 				canvas.DrawCircle(b, 1, yellowStroke);
 			}
+
 			canvas.DrawText(boundingSvgPath, -240, 240, redFill);
 			canvas.DrawText(svgPath, -240, 255, redFill);
 		}
