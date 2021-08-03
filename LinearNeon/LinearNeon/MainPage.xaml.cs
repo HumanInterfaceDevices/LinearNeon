@@ -126,12 +126,12 @@ namespace LinearNeon
 			lineWidth = Convert.ToSingle(100 * thicknessSlider.Value);
 			radius = (radiusSlider.Value * 200) + (lineWidth / 2);
 
-			//// calculate center of circle
-			//toCenterAngleAngle = clockwise ? startAngle + (pi / 2) : startAngle - (pi / 2);
-			//if (toCenterAngleAngle > (pi * 2)) toCenterAngleAngle -= pi * 2;
-			//if (toCenterAngleAngle < 0) toCenterAngleAngle += pi * 2;
-			//xCenter = Convert.ToSingle(slider[0] + (Math.Cos(toCenterAngleAngle) * radius));
-			//yCenter = Convert.ToSingle(slider[1] + (Math.Sin(toCenterAngleAngle) * radius));
+			// calculate center of circle
+			toCenterAngleAngle = clockwise ? startAngle + (pi / 2) : startAngle - (pi / 2);
+			if (toCenterAngleAngle > (pi * 2)) toCenterAngleAngle -= pi * 2;
+			if (toCenterAngleAngle < 0) toCenterAngleAngle += pi * 2;
+			xCenter = Convert.ToSingle(slider[0] + (Math.Cos(toCenterAngleAngle) * radius));
+			yCenter = Convert.ToSingle(slider[1] + (Math.Sin(toCenterAngleAngle) * radius));
 
 			//// calculate path start
 			//startRadiusAngle = clockwise ? startAngle - (pi / 2) : startAngle + (pi / 2);
@@ -192,6 +192,14 @@ namespace LinearNeon
 				canvas.DrawPath(boundingBezierPath, redStroke);
 				canvas.DrawPath(boundingBezierPath, redBlurStroke);
 			}
+
+			if (fill)
+			{
+				SKPoint center = new SKPoint(xCenter, yCenter);
+				var laserFill = new SKPaint { Shader = twoPointsConicalShader(center, Convert.ToSingle(radius), lineWidth) };
+				canvas.DrawPath(boundingBezierPath, laserFill);
+			}
+
 			if (path)
 			{
 				SKPath bezierPath = SKPath.ParseSvgPathData(svgPath);
@@ -255,7 +263,7 @@ namespace LinearNeon
 			float reposY = ReposY;
 
 			// calculate inner arc start
-			double endRadiusAngle = clockwise ? StartAngle + SweepAngle - (pi / 2) : StartAngle - SweepAngle - (pi / 2);
+			double endRadiusAngle = clockwise ? StartAngle + SweepAngle + (pi / 2) : StartAngle - SweepAngle - (pi / 2);
 			if (endRadiusAngle > (pi * 2)) endRadiusAngle -= pi * 2;
 			if (endRadiusAngle < 0d) endRadiusAngle += pi * 2d;
 
@@ -274,68 +282,6 @@ namespace LinearNeon
 			svgOut += " l " + arcPoint[0, 0] + " " + arcPoint[1, 0] + " c " + arcPoint[0, 1] + " " + arcPoint[1, 1] + " " + arcPoint[0, 2] + " " + arcPoint[1, 2] + " " + arcPoint[0, 3] + " " + arcPoint[1, 3] + " z";
 			return svgOut;
 		}
-		//double radius = Radius, startAngle = StartAngle, sweepAngle = SweepAngle, radiusOffset = RadiusOffset;
-		//bool arcClockwise = Clockwise;
-		//float xCenter = XCenter, yCenter = YCenter;
-		//double startRadiusAngle = arcClockwise ? startAngle - (pi / 2) : startAngle + (pi / 2); // angle from radius to start point
-		//startRadiusAngle -= Math.Truncate(startRadiusAngle / (pi * 2)) * (pi * 2); // mathematical overcircle check
-		//sweepAngle -= Math.Truncate(sweepAngle / (pi * 2)) * (pi * 2); // mathematical overcircle check
-		//double toCenterAngle = arcClockwise ? startAngle + (pi / 2) : startAngle - (pi / 2); // direction to center
-		//if (toCenterAngle > (pi * 2)) toCenterAngle -= pi * 2;
-		//if (toCenterAngle < 0) toCenterAngle += pi * 2;
-		//if (xCenter == 0f) xCenter = Convert.ToSingle(Math.Cos(toCenterAngle) * radius); // center coordinates
-		//if (yCenter == 0f) yCenter = Convert.ToSingle(Math.Sin(toCenterAngle) * radius);
-		//int arcSections = Convert.ToInt32(Math.Truncate(sweepAngle / ((pi / 2) + 0.00000001)) + 1); // calculate number of sections not greater than 1/4 circle
-		//double sectionAngle = sweepAngle / arcSections; // actual section angle
-		//double circleFraction = pi * 2 / sectionAngle; // portion of a complete circle in section
-		//radius += radiusOffset;
-
-		//float[,] arcPoint = new float[2, 4];
-		//arcPoint[0, 0] = Convert.ToSingle(xCenter + (Math.Cos(startRadiusAngle) * radius));
-		//arcPoint[1, 0] = Convert.ToSingle(yCenter + (Math.Sin(startRadiusAngle) * radius));
-
-		//svgOut += "l " + arcPoint[0, 0] + " " + arcPoint[1, 0];
-
-		//// calculate bezier length
-		//double bezierLength = radius * 4 / 3 * Math.Tan(pi / (2 * circleFraction));
-		//for (int i = 0; i < arcSections; ++i) // repeat for each section to complete arc
-		//{
-		//	// calculate start bezier point
-		//	arcPoint[0, 1] = Convert.ToSingle(arcPoint[0, 0] + (Math.Cos(startAngle) * bezierLength));
-		//	arcPoint[1, 1] = Convert.ToSingle(arcPoint[1, 0] + (Math.Sin(startAngle) * bezierLength));
-		//	double endRadiusAngle = arcClockwise ? startRadiusAngle + sectionAngle : startRadiusAngle - sectionAngle;
-		//	if (endRadiusAngle > (pi * 2)) endRadiusAngle -= pi * 2;
-		//	if (endRadiusAngle < 0d) endRadiusAngle += pi * 2d;
-		//	arcPoint[0, 3] = Convert.ToSingle(xCenter + (Math.Cos(endRadiusAngle) * radius));
-		//	arcPoint[1, 3] = Convert.ToSingle(yCenter + (Math.Sin(endRadiusAngle) * radius));
-		//	// calculate end bezier point
-		//	double endAngle = arcClockwise ? endRadiusAngle - (pi / 2) : endRadiusAngle + (pi / 2);
-		//	if (endAngle > (pi * 2d)) endAngle -= pi * 2;
-		//	if (endAngle < 0d) endAngle += pi * 2;
-		//	arcPoint[0, 2] = Convert.ToSingle(arcPoint[0, 3] + (Math.Cos(endAngle) * bezierLength));
-		//	arcPoint[1, 2] = Convert.ToSingle(arcPoint[1, 3] + (Math.Sin(endAngle) * bezierLength));
-		//	if (Inner)
-		//	{
-		//		float swapFloat = arcPoint[0, 0]; arcPoint[0, 0] = arcPoint[0, 3]; arcPoint[0, 3] = swapFloat;
-		//		swapFloat = arcPoint[0, 1]; arcPoint[0, 1] = arcPoint[0, 2]; arcPoint[0, 2] = swapFloat;
-		//		swapFloat = arcPoint[1, 0]; arcPoint[1, 0] = arcPoint[1, 3]; arcPoint[1, 3] = swapFloat;
-		//		swapFloat = arcPoint[1, 1]; arcPoint[1, 1] = arcPoint[1, 2]; arcPoint[1, 2] = swapFloat;
-		//		for (int j = 3; j >= 0; --j)
-		//		{
-		//			arcPoint[0, j] -= arcPoint[0, 0];
-		//			arcPoint[1, j] -= arcPoint[1, 0];
-		//		}
-		//	}
-
-		//	//prepare for output and next loop
-		//	startRadiusAngle = endRadiusAngle;
-		//	startAngle = arcClockwise ? startAngle + sectionAngle : startAngle - sectionAngle;
-		//	svgOut += " c " + arcPoint[0, 1] + " " + arcPoint[1, 1] + " " + arcPoint[0, 2] + " " + arcPoint[1, 2] + " " + arcPoint[0, 3] + " " + arcPoint[1, 3];
-		//	arcPoint[0, 0] = Convert.ToSingle(xCenter + (Math.Cos(startRadiusAngle) * radius));
-		//	arcPoint[1, 0] = Convert.ToSingle(yCenter + (Math.Sin(startRadiusAngle) * radius));
-		//}
-		//arcPointsArray(double StartAngle, double SweepAngle, double Radius, double RadiusOffset = 0d, bool Clockwise = false, float XCenter = 0f, float YCenter = 0f)
-
 
 		private void clockwiseButton_Clicked(object sender, EventArgs e)
 		{
