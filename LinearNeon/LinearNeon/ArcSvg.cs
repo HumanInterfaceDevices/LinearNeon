@@ -57,15 +57,27 @@ namespace LinearNeon
 		{
 			float [,] arcArray = ArcArray;
 			float [,] swapArray = new float [2,4];
-			swapArray[0, 0] = arcArray[0, 3] - arcArray[0, 3];
-			swapArray[1, 0] = arcArray[1, 3] - arcArray[1, 3];
+			swapArray[0, 0] = 0f;
+			swapArray[1, 0] = 0f;
 			swapArray[0, 1] = arcArray[0, 2] - arcArray[0, 3];
 			swapArray[1, 1] = arcArray[1, 2] - arcArray[1, 3];
 			swapArray[0, 2] = arcArray[0, 1] - arcArray[0, 3];
 			swapArray[1, 2] = arcArray[1, 1] - arcArray[1, 3];
-			swapArray[0, 3] = arcArray[0, 0] - arcArray[0, 3];
-			swapArray[1, 3] = arcArray[1, 0] - arcArray[1, 3];
+			swapArray[0, 3] = -arcArray[0, 3];
+			swapArray[1, 3] = -arcArray[1, 3];
 			return swapArray;
 		}
+		public static float[,] repositionArcArray(float[,] ArcArray, float XTranslate, float YTranslate)
+		{
+			float[,] repoArray = ArcArray;
+			float xTranslate = XTranslate, yTranslate = YTranslate;
+			for (int i = 0; i <= 3; i++)
+			{
+				repoArray[0, i] += xTranslate;
+				repoArray[1, i] += yTranslate;
+			}
+			return repoArray;
+		}
 	}
+
 }
