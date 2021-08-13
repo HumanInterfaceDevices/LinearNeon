@@ -17,8 +17,8 @@ namespace LinearNeon
 			float xCenter = XCenter, yCenter = YCenter;
 
 			double startRadiusAngle = arcClockwise ? startAngle - (pi / 2) : startAngle + (pi / 2); // angle from radius to start point
-			startRadiusAngle -= Convert.ToInt32(startRadiusAngle / (pi * 2)) * (pi * 2); // mathematical overcircle check
-			sweepAngle -= Convert.ToInt32(sweepAngle / (pi * 2)) * (pi * 2); // mathematical overcircle check
+			startRadiusAngle -= Convert.ToInt32(startRadiusAngle / (pi * 2)) * (pi * 2); // mathematical overcircle checks
+			sweepAngle -= Convert.ToInt32(sweepAngle / (pi * 2)) * (pi * 2); 
 
 			double toCenterAngle = arcClockwise ? startAngle + (pi / 2) : startAngle - (pi / 2); // direction to center
 			if (toCenterAngle > (pi * 2)) toCenterAngle -= pi * 2;
