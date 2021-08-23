@@ -17,12 +17,11 @@ namespace LinearNeon
 			float xCenter = XCenter, yCenter = YCenter;
 
 			double startRadiusAngle = arcClockwise ? startAngle - (pi / 2) : startAngle + (pi / 2); // angle from radius to start point
-			startRadiusAngle -= Convert.ToInt32(startRadiusAngle / (pi * 2)) * (pi * 2); // mathematical overcircle checks
-			sweepAngle -= Convert.ToInt32(sweepAngle / (pi * 2)) * (pi * 2); 
+			startRadiusAngle = circleCheck(startRadiusAngle);
+			sweepAngle = circleCheck(sweepAngle);
 
 			double toCenterAngle = arcClockwise ? startAngle + (pi / 2) : startAngle - (pi / 2); // direction to center
-			if (toCenterAngle > (pi * 2)) toCenterAngle -= pi * 2;
-			if (toCenterAngle < 0) toCenterAngle += pi * 2;
+			toCenterAngle = circleCheck(toCenterAngle);
 			if (XCenter == 0f) xCenter = Convert.ToSingle(Math.Cos(toCenterAngle) * radius); // center coordinates
 			if (YCenter == 0f) yCenter = Convert.ToSingle(Math.Sin(toCenterAngle) * radius);
 
@@ -37,26 +36,25 @@ namespace LinearNeon
 
 			arcArray[0, 1] = Convert.ToSingle(arcArray[0, 0] + (Math.Cos(startAngle) * bezierLength)) - arcArray[0, 0]; // calculate start bezier point
 			arcArray[1, 1] = Convert.ToSingle(arcArray[1, 0] + (Math.Sin(startAngle) * bezierLength)) - arcArray[1, 0];
-			
+
 			double endRadiusAngle = arcClockwise ? startRadiusAngle + sweepAngle : startRadiusAngle - sweepAngle; // Which way and how far
-			if (endRadiusAngle > (pi * 2)) endRadiusAngle -= pi * 2;
-			if (endRadiusAngle < 0) endRadiusAngle += pi * 2;
+			endRadiusAngle = circleCheck(endRadiusAngle);
 
 			arcArray[0, 3] = Convert.ToSingle(xCenter + (Math.Cos(endRadiusAngle) * radius)) - arcArray[0, 0]; // calculate end point
 			arcArray[1, 3] = Convert.ToSingle(yCenter + (Math.Sin(endRadiusAngle) * radius)) - arcArray[1, 0];
 
 			double endAngle = arcClockwise ? endRadiusAngle - (pi / 2) : endRadiusAngle + (pi / 2); // calculate end bezier point
-			if (endAngle > (pi * 2d)) endAngle -= pi * 2;
-			if (endAngle < 0d) endAngle += pi * 2;
+			endAngle = circleCheck(endAngle);
 			arcArray[0, 2] = Convert.ToSingle(arcArray[0, 3] + (Math.Cos(endAngle) * bezierLength));
 			arcArray[1, 2] = Convert.ToSingle(arcArray[1, 3] + (Math.Sin(endAngle) * bezierLength));
+
 
 			return arcArray;
 		}
 		public static float[,] reverseArcArray(float[,] ArcArray)
 		{
-			float [,] arcArray = ArcArray;
-			float [,] swapArray = new float [2,4];
+			float[,] arcArray = ArcArray;
+			float[,] swapArray = new float[2, 4];
 			swapArray[0, 0] = 0f;
 			swapArray[1, 0] = 0f;
 			swapArray[0, 1] = arcArray[0, 2] - arcArray[0, 3];
@@ -67,6 +65,33 @@ namespace LinearNeon
 			swapArray[1, 3] = -arcArray[1, 3];
 			return swapArray;
 		}
+
+		public static float circleCheck(float AngleIn)
+		{
+			float angleOut = AngleIn;
+			if (angleOut > (pi * 2)) angleOut -= Convert.ToSingle(pi * 2);
+			if (angleOut < 0) angleOut += Convert.ToSingle(pi * 2);
+			return angleOut;
+		}
+		public static double circleCheck(double AngleIn)
+		{
+			double angleOut = AngleIn;
+			if (angleOut > (pi * 2)) angleOut -= pi * 2;
+			if (angleOut < 0) angleOut += pi * 2;
+			return angleOut;
+		}
+		public static FullArc arcDivider(double SweepAngle)
+		{
+			FullArc output = new FullArc();
+			output.count = Convert.ToInt32(Math.Truncate(SweepAngle / (pi / 2))) + 1;
+			output.angle = SweepAngle / output.count;
+			return output;
+		}
+	}
+	class FullArc
+	{
+		public double angle;
+		public int count;
 	}
 
 }

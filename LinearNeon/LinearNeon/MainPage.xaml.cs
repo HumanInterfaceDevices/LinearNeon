@@ -15,9 +15,9 @@ namespace LinearNeon
 		bool fill = false;
 		bool outline = true;
 		bool path = true;
-		bool control = true;
+		bool control = false;
 		bool isGrid = false;
-		bool createBox = false;
+		bool createShape = false;
 
 		// Paints
 		SKPaint blackFill = new SKPaint
@@ -108,14 +108,14 @@ namespace LinearNeon
 			float[] slider = new float[2], swapPoint = new float[2];
 			float xCenter, yCenter, lineWidth, lineLength;
 			double startAngle, sweepAngle, lastAngle, toCenterAngle, radius;
-			string boundingSvgPath, svgPath;
+			string boundingSvgPath = "", svgPath = "";
 			int circleFraction;
 
 			// bound and formula variables
 			slider[0] = Convert.ToSingle(xSlider.Value * 200) - 100;
 			slider[1] = Convert.ToSingle(ySlider.Value * 200) - 100;
 			startAngle = startSlider.Value * (pi * 2);
-			sweepAngle = sweepSlider.Value * (pi / 2);
+			sweepAngle = sweepSlider.Value * (pi * 2);
 			lineWidth = Convert.ToSingle(100 * thicknessSlider.Value);
 			lineLength = Convert.ToSingle(100 * thicknessSlider.Value);
 			radius = radiusSlider.Value * 200;
@@ -125,21 +125,27 @@ namespace LinearNeon
 			{
 				lineWidth = Convert.ToSingle(radius * 2);
 			}
-			
 
 			// create primary arc
-			float[,] pathPoint = ArcPlot.arcPointsArray(startAngle, sweepAngle, radius, 0f, clockwise);
-			pathPoint[0, 0] += slider[0];
-			pathPoint[1, 0] += slider[1];
-			svgPath = "m " + pathPoint[0, 0] + " " + pathPoint[1, 0] + " c " + pathPoint[0, 1] + " " + pathPoint[1, 1] + " " + pathPoint[0, 2] + " " + pathPoint[1, 2] + " " + pathPoint[0, 3] + " " + pathPoint[1, 3];
+			float[,] pathPoint = new float[2, 4];
+			FullArc arc = ArcPlot.arcDivider(sweepAngle);
+			for (int i = 0; i < arc.count; i++)
+			{
+				double splitAngle = clockwise ? startAngle + (i * arc.angle) : startAngle - (i * arc.angle);
+				pathPoint = ArcPlot.arcPointsArray(splitAngle, arc.angle, radius, 0f, clockwise);
+				pathPoint[0, 0] += slider[0];
+				pathPoint[1, 0] += slider[1];
+				if (i == 0) svgPath += "m " + pathPoint[0, 0] + " " + pathPoint[1, 0];
+				svgPath +=" c " + pathPoint[0, 1] + " " + pathPoint[1, 1] + " " + pathPoint[0, 2] + " " + pathPoint[1, 2] + " " + pathPoint[0, 3] + " " + pathPoint[1, 3];
+			}
 			SKPath bezierPath = SKPath.ParseSvgPathData(svgPath);
 
 			// create outline shape
-			boundingSvgPath = ArcOutlineSvg(startAngle, sweepAngle, radius, lineWidth / 2, clockwise, 0, 0, slider[0], slider[1]);
+			boundingSvgPath += ArcOutlineSvg(startAngle, sweepAngle, radius, lineWidth / 2, clockwise, 0, 0, slider[0], slider[1]);
 			SKPath boundingBezierPath = SKPath.ParseSvgPathData(boundingSvgPath);
 
 			// visual switches
-			if (createBox)
+			if (createShape)
 			{
 				svgPath = "";
 				circleFraction = (sweepAngle != 0) ? Convert.ToInt32(((pi * 2) / sweepAngle)) : 0;
@@ -150,7 +156,7 @@ namespace LinearNeon
 					pathPoint = ArcPlot.arcPointsArray(lastAngle + startAngle, currentAngle, radius, 0f, clockwise);
 					pathPoint[0, 0] = Convert.ToSingle(Math.Cos(lastAngle + startAngle) * lineLength);
 					pathPoint[1, 0] = Convert.ToSingle(Math.Sin(lastAngle + startAngle) * lineLength);
-					svgPath += (i==0) ? " m " + slider[0] + " " + slider[1]: " l " + pathPoint[0, 0] + " " + pathPoint[1, 0];
+					svgPath += (i==0) ? " m " + slider[0] + " " + slider[1] : " l " + pathPoint[0, 0] + " " + pathPoint[1, 0];
 					svgPath += " c " + pathPoint[0, 1] + " " + pathPoint[1, 1] + " " + pathPoint[0, 2] + " " + pathPoint[1, 2] + " " + pathPoint[0, 3] + " " + pathPoint[1, 3];
 				}
 				svgPath += " z";
@@ -170,6 +176,7 @@ namespace LinearNeon
 				xCenter = Convert.ToSingle(slider[0] + (Math.Cos(toCenterAngle) * radius));
 				yCenter = Convert.ToSingle(slider[1] + (Math.Sin(toCenterAngle) * radius));
 				SKPoint center = new SKPoint(xCenter, yCenter);
+
 				var laserFill = new SKPaint { Shader = twoPointsConicalShader(center, Convert.ToSingle(radius), lineWidth) };
 				canvas.DrawPath(boundingBezierPath, laserFill);
 			}
@@ -228,19 +235,38 @@ namespace LinearNeon
 			if (endRadiusAngle > (pi * 2)) endRadiusAngle -= pi * 2;
 			if (endRadiusAngle < 0d) endRadiusAngle += pi * 2d;
 
-			float[,] arcPointOuter = ArcPlot.arcPointsArray(StartAngle, SweepAngle, Radius, RadiusOffset, Clockwise, XCenter, YCenter);
+			FullArc arc = ArcPlot.arcDivider(SweepAngle);
 
-			arcPointOuter[0, 0] += ReposX;
-			arcPointOuter[1, 0] += ReposY;
+			// outer
+			for (int i = 0; i < arc.count; i++)
+			{
+				double splitAngle = clockwise? StartAngle + (i * arc.angle) : StartAngle - (i * arc.angle);
+				float[,] arcPointOuter = ArcPlot.arcPointsArray(splitAngle, arc.angle, Radius, RadiusOffset, Clockwise, XCenter, YCenter);
 
-			svgOut += " m " + arcPointOuter[0, 0] + " " + arcPointOuter[1, 0] + " c " + arcPointOuter[0, 1] + " " + arcPointOuter[1, 1] + " " + arcPointOuter[0, 2] + " " + arcPointOuter[1, 2] + " " + arcPointOuter[0, 3] + " " + arcPointOuter[1, 3];
+				if (i == 0)
+				{
+					arcPointOuter[0, 0] += ReposX;
+					arcPointOuter[1, 0] += ReposY;
+					svgOut += " m " + arcPointOuter[0, 0] + " " + arcPointOuter[1, 0];
+				}
+				svgOut += " c " + arcPointOuter[0, 1] + " " + arcPointOuter[1, 1] + " " + arcPointOuter[0, 2] + " " + arcPointOuter[1, 2] + " " + arcPointOuter[0, 3] + " " + arcPointOuter[1, 3];
+			}
 
-			float[,] arcPointInner = ArcPlot.reverseArcArray(ArcPlot.arcPointsArray(StartAngle, SweepAngle, Radius, -RadiusOffset, Clockwise, XCenter, YCenter));
-
-			arcPointInner[0, 0] = Convert.ToSingle(Math.Cos(endRadiusAngle) * 2 * RadiusOffset);
-			arcPointInner[1, 0] = Convert.ToSingle(Math.Sin(endRadiusAngle) * 2 * RadiusOffset);
-
-			svgOut += " l " + arcPointInner[0, 0] + " " + arcPointInner[1, 0] + " c " + arcPointInner[0, 1] + " " + arcPointInner[1, 1] + " " + arcPointInner[0, 2] + " " + arcPointInner[1, 2] + " " + arcPointInner[0, 3] + " " + arcPointInner[1, 3] + " z";
+			// inner
+			double innerStart = clockwise ? ArcPlot.circleCheck(StartAngle + SweepAngle + pi) : ArcPlot.circleCheck(StartAngle - SweepAngle + pi);
+			for (int i = 0; i < arc.count; i++)
+			{
+				double splitAngle = clockwise ? innerStart - (i * arc.angle) : innerStart + (i * arc.angle);
+				float[,] arcPointInner = ArcPlot.arcPointsArray(splitAngle, arc.angle, Radius, -RadiusOffset, !Clockwise, XCenter, YCenter);
+				if (i == 0)
+				{
+					arcPointInner[0, 0] = Convert.ToSingle(Math.Cos(endRadiusAngle) * 2 * RadiusOffset);
+					arcPointInner[1, 0] = Convert.ToSingle(Math.Sin(endRadiusAngle) * 2 * RadiusOffset);
+					svgOut += " l " + arcPointInner[0, 0] + " " + arcPointInner[1, 0];
+				}
+				svgOut += " c " + arcPointInner[0, 1] + " " + arcPointInner[1, 1] + " " + arcPointInner[0, 2] + " " + arcPointInner[1, 2] + " " + arcPointInner[0, 3] + " " + arcPointInner[1, 3];
+			}
+			svgOut += " z ";
 			return svgOut;
 		}
 
@@ -265,9 +291,9 @@ namespace LinearNeon
 		{
 			control = !control;
 		}
-		private void boxButton_Clicked(object sender, EventArgs e)
+		private void shapeButton_Clicked(object sender, EventArgs e)
 		{
-			createBox = !createBox;
+			createShape = !createShape;
 		}
 	}
 }
