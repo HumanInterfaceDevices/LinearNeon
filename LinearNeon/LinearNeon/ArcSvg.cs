@@ -65,14 +65,6 @@ namespace LinearNeon
 			swapArray[1, 3] = -arcArray[1, 3];
 			return swapArray;
 		}
-
-		public static float circleCheck(float AngleIn)
-		{
-			float angleOut = AngleIn;
-			if (angleOut > (pi * 2)) angleOut -= Convert.ToSingle(pi * 2);
-			if (angleOut < 0) angleOut += Convert.ToSingle(pi * 2);
-			return angleOut;
-		}
 		public static double circleCheck(double AngleIn)
 		{
 			double angleOut = AngleIn;
